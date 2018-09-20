@@ -108,7 +108,6 @@ char encrypt(int plaintext, int key){
 	swap(left, right);
 	//do it again
 	key = leftShiftKey(key);
-	key = leftShiftKey(key);
 
 	left = left ^ ffunction(right, permute(key, P8, 8, 10));
 
