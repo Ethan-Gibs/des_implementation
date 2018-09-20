@@ -115,24 +115,87 @@ char encrypt(int plaintext, int key){
 	return (permute(plaintext, inverse_initial_perm, 8, 8));
 }
 
+char decrypt(int encrypttext, int key){
+	//initial permutation of bit positions
+	int initial_perm_pt[8] = {2, 6, 3, 1, 4, 8, 5, 7};
+	//inverse permutation of bit positions
+	int inverse_initial_perm[8] = {4, 1, 3, 5, 7, 2, 8, 6};
+	//P10: Permutation of 10-bit
+	int P10[10] = {3, 5, 2, 7, 4, 10, 1, 9, 8, 6};
+	//P8: Permutation of 8-bit
+	int P8[8] = {6, 3, 7, 4, 8, 5, 10, 9};
+	
+	//perform initial permutation
+	int permuted_encrypttext = permute(encrypttext, initial_perm_pt, 8, 8);
+	//seperate left and right
+	//bitmask 1111 to get right digits
+	int right = permuted_encrypttext & 0b1111;
+	//bitshift right 4 times to get left digits
+	int left = permuted_encrypttext >> 4;
+
+	//Perform P10 on key
+	key = permute(key, P10, 10, 10);
+
+	//get the key after circular leftshifts
+	key = leftShiftKey(key);
+	int k1 = permute(key, P8, 8, 10);
+	key = leftShiftKey(key);
+	int k2 = permute(key, P8, 8, 10);
+
+	//first ffunction	
+	left = left ^ ffunction(right, k2);
+
+	//swap left and right
+	swap(left, right);
+
+	//do it again
+	left = left ^ ffunction(right, k1);
+
+	encrypttext = (left << 4) | right;
+	return (permute(encrypttext, inverse_initial_perm, 8, 8));
+
+}
+
 //take arguements as <input file> <output file>
 int main(int argc, char** argv){
 	std::string infile_name = argv[1];
 	std::string outfile_name = argv[2];
-	int key = 0b0010101111;
+	std::string argv3 = argv[3];
+	int key = 0b0010101110;
 
 	//open the files to input and output
 	std::ifstream infile;
 	std::ofstream outfile;
 	infile.open(infile_name);
 	outfile.open(outfile_name);
+	if(argv3 == "-d"){
+		//consider bytes as chars
+		char temp;
+		while(infile.get(temp)){
 
-	//consider it a character
-	char temp;
-	while(infile.get(temp)){
-		//encrypt byte by byte
-		temp = encrypt(temp, key);
-		//output to a file
-		outfile.put(temp);
+			//encrypt byte by byte
+			temp = decrypt(temp, key);
+			
+			//output to a file
+			outfile.put(temp);
+		}
 	}
+	else{
+		//consider bytes as chars
+		char temp;
+		while(infile.get(temp)){
+
+			//encrypt byte by byte
+			temp = encrypt(temp, key);
+
+			//output to a file
+			outfile.put(temp);
+		}
+	}
+	
+	
+
+	
+	infile.close();
+	outfile.close();
 }
